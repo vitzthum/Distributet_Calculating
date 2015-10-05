@@ -6,7 +6,7 @@ func main() {
 	fmt.Println("\ncounting")
 
 	for i := 0; i < 10; i++ {
-		fmt.Println(i)
+		defer fmt.Println(i)
 	}
 
 	fmt.Println("done\n")
