@@ -9,12 +9,13 @@ import (
 
 const Threads = 10
 var wg sync.WaitGroup
+const Calculations = 1e10
 
 func calculate() () {
 	defer wg.Done()
 
-	for i := 1; i < 1e6/Threads; i++ {
-		for j := 1; j < 1e5; j++ {
+	for i := 1; i <= (Calculations/1e3)/Threads; i++ {
+		for j := 1; j <= 1e3; j++ {
 			var _ = i+j
 		}
 	}
@@ -53,8 +54,12 @@ func main() {
 	}
 
 	wg.Wait()
+	duration := time.Since(before)
+
 	fmt.Println("\n----------------------\n")
-	fmt.Printf("done in: %v\n", time.Since(before))
+	fmt.Printf("Threads     : %v\n", Threads)
+	fmt.Printf("Calculations: %v Mio.\n", Calculations/1e6)
+	fmt.Printf("done in     : %v\n", duration)
 	fmt.Println("\n----------------------\n")
 
 	// calculate average duration
