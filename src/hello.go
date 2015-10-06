@@ -3,46 +3,63 @@ package main
 import (
 	"fmt"
 	"time"
+	"runtime"
+	"sync"
 )
 
-const Times = 5
+const Threads = 10
+var wg sync.WaitGroup
 
-func main() {
+func calculate() () {
+	defer wg.Done()
 
-	var durationPerRound [Times]time.Duration
-//	var averageTime int
-
-	for i := 0; i < Times; i++ {
-
-		fmt.Println("\n")
-		fmt.Println("----------------------")
-		fmt.Printf("\ncalculating: %v\n\n", i+1)
-
-		x := 0
-
-		bevore := time.Now()
-		for i := 1; i < 100000; i++ {
-			for j := 1; j < 8000; j++ {
-				y := i+j
-				if y >= 0 {
-					x += 1
-				}
-			}
+	for i := 1; i < 1e6/Threads; i++ {
+		for j := 1; j < 1e5; j++ {
+			var _ = i+j
 		}
-		
-		duration := time.Since(bevore)
-		
-		fmt.Printf("about %v Mio. calculations done in:  %v\n", x/1e6, duration)
-		fmt.Println("\n----------------------\n")
+	}
+	return
+}
+/*
+func calculateAverage(durations [Threads]time.Duration) (averageDuration int) {
+	for i := 0; i < Threads; i++ {
+		averageDuration += int(durations[i])
+	}
+	averageDuration /= Threads
 
-		durationPerRound[i] = duration
+	time.ParseDuration(string(averageDuration))
 
-		fmt.Println(duration.Hours)
+	return
+}
+
+func showAverage(averageDuration int, calculations int) {
+	fmt.Println("\n----------------------\n")
+	if averageDuration/1e6 >= 1000 {
+		fmt.Printf("average Time: %3.2f s\n", float64(averageDuration)/1e9)
+	} else {
+		fmt.Printf("average Time: %v ms\n", averageDuration/1e6)
+	}
+	fmt.Println("\n----------------------\n")
+}
+*/
+func main() {
+	runtime.GOMAXPROCS(Threads)
+	wg.Add(Threads)
+
+	before := time.Now()
+
+	for i := 0; i < Threads; i++ {
+		go calculate()
 	}
 
-	for i := 0; i < Times; i++ {
-//		averageTime += time.Nanoseconds(durationPerRound[i])
-	}
-//	averageTime /= Times
+	wg.Wait()
+	fmt.Println("\n----------------------\n")
+	fmt.Printf("done in: %v\n", time.Since(before))
+	fmt.Println("\n----------------------\n")
 
+	// calculate average duration
+//	averageDuration := calculateAverage(durations)
+
+	// show average duration
+//	showAverage(averageDuration, calculations)
 }
