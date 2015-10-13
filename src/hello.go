@@ -2,24 +2,43 @@ package main
 
 import (
 	"fmt"
-	"time"
+//	"time"
 	"runtime"
 	"sync"
+	"golang.org/x/crypto/bcrypt"
 )
 
-const Threads = 10
+const Threads = 1
+const Calculations = 1e6
 var wg sync.WaitGroup
-const Calculations = 1e10
+var found = false
 
 type Vertex struct {
 	start, end int
 }
 
 
-func guess(x Vertex) {
+func guess(hash []byte) {
 	defer wg.Done()
 
-	for i := x.start; i <= x.end; i++ {
+	start := []byte("A")
+	end := []byte("z")
+
+	var x []byte = make([]byte, 10)
+
+	for i := 0; i <= 2 && !found; i++ {
+		for j := start[0]; j <= end[0] && !found; j++ {
+			x[i] = j
+			if(bcrypt.CompareHashAndPassword(hash, x) == nil) {
+				found = true
+			}
+		}
+	}
+
+	if found {
+		fmt.Println("found :)")
+	} else {
+		fmt.Println("not found")
 	}
 
 	return
@@ -30,35 +49,54 @@ func main() {
 	wg.Add(Threads)
 
 	fmt.Println("")
-	fmt.Print("type a value (0 - 1000): ")
-	fmt.Scanln()
+	fmt.Print("type in your password (only 1 letter): ")
 
+	var value string
+	_, err := fmt.Scanln(&value)
+
+	if(err != nil) {
+		fmt.Println(err)
+		return
+	}
+
+	password := []byte(value)
+	hash, err := bcrypt.GenerateFromPassword(password, 4)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+/*
 	var ranges [Threads]Vertex
 	for i := 0; i < Threads; i++ {
 		ranges[i].start = Calculations/Threads * i
 		ranges[i].end = Calculations/Threads * (i+1) - 1
 	}
-
 	before := time.Now()
+*/
 
 	for i := 0; i < Threads; i++ {
-		go guess(ranges[i])
+		guess(hash)
 	}
 
 	wg.Wait()
+/*
 	duration := time.Since(before)
 
 	fmt.Println("\n----------------------\n")
 	fmt.Printf("Threads     : %v\n", Threads)
-	fmt.Printf("Calculations: %v Billions\n", Calculations/1e9)
+	fmt.Printf("Calculations: %v Millions\n", Calculations/1e6)
 	fmt.Printf("done in     : %v\n", duration)
 	fmt.Println("\n----------------------\n")
 
+/*
 	// calculate average duration
-//	averageDuration := calculateAverage(durations)
+	averageDuration := calculateAverage(durations)
 
 	// show average duration
-//	showAverage(averageDuration, calculations)
+	showAverage(averageDuration, calculations)
+*/
 }
 
 /*
